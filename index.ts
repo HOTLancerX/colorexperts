@@ -15,6 +15,11 @@ import videoLightboxElement from "./elements/VideoLightbox";
 import servicePricingCardElement from "./elements/ServicePricingCard";
 import hoverBoxElement from "./elements/HoverBox";
 import disclaimerElement from "./elements/Disclaimer";
+import tabsElement from "./elements/Tabs";
+import oneTabsElement from "./elements/OneTabs";
+import sliderElement from "./elements/Slider";
+import boxSliderElement from "./elements/BoxSlider";
+import testimonialsElement from "./elements/Testimonials";
 
 export const PLUGINS: PluginMeta = {
     nx:          "com.system.colorexperts",
@@ -40,4 +45,9 @@ export function register() {
     addBuilderElement(servicePricingCardElement, PLUGINS.nx);
     addBuilderElement(hoverBoxElement, PLUGINS.nx);
     addBuilderElement(disclaimerElement, PLUGINS.nx);
+    addBuilderElement(tabsElement, PLUGINS.nx);
+    addBuilderElement(oneTabsElement, PLUGINS.nx);
+    addBuilderElement(sliderElement, PLUGINS.nx);
+    addBuilderElement(boxSliderElement, PLUGINS.nx);
+    addBuilderElement(testimonialsElement, PLUGINS.nx);
 }
