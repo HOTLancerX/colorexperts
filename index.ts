@@ -13,6 +13,8 @@ import hoverImageSwapCardElement from "./elements/HoverImageSwapCard";
 import faqAccordionElement from "./elements/FaqAccordion";
 import videoLightboxElement from "./elements/VideoLightbox";
 import servicePricingCardElement from "./elements/ServicePricingCard";
+import hoverBoxElement from "./elements/HoverBox";
+import disclaimerElement from "./elements/Disclaimer";
 
 export const PLUGINS: PluginMeta = {
     nx:          "com.system.colorexperts",
@@ -36,4 +38,6 @@ export function register() {
     addBuilderElement(faqAccordionElement, PLUGINS.nx);
     addBuilderElement(videoLightboxElement, PLUGINS.nx);
     addBuilderElement(servicePricingCardElement, PLUGINS.nx);
+    addBuilderElement(hoverBoxElement, PLUGINS.nx);
+    addBuilderElement(disclaimerElement, PLUGINS.nx);
 }
