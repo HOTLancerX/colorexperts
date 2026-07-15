@@ -20,6 +20,13 @@ import oneTabsElement from "./elements/OneTabs";
 import sliderElement from "./elements/Slider";
 import boxSliderElement from "./elements/BoxSlider";
 import testimonialsElement from "./elements/Testimonials";
+import beforeAfterTabsElement from "./elements/BeforeAfterTabs";
+import beforeAfterSlidersElement from "./elements/BeforeAfterSliders";
+import beforeAfterBoxElement from "./elements/BeforeAfterBox";
+import eBoxElement from "./elements/eBox";
+import eBoxsElement from "./elements/eBoxs";
+import beforeAfterTabElement from "./elements/BeforeAfterTab";
+import priceTableElement from "./elements/PriceTable";
 
 export const PLUGINS: PluginMeta = {
     nx:          "com.system.colorexperts",
@@ -50,4 +57,11 @@ export function register() {
     addBuilderElement(sliderElement, PLUGINS.nx);
     addBuilderElement(boxSliderElement, PLUGINS.nx);
     addBuilderElement(testimonialsElement, PLUGINS.nx);
+    addBuilderElement(beforeAfterTabsElement, PLUGINS.nx);
+    addBuilderElement(beforeAfterSlidersElement, PLUGINS.nx);
+    addBuilderElement(beforeAfterBoxElement, PLUGINS.nx);
+    addBuilderElement(eBoxElement, PLUGINS.nx);
+    addBuilderElement(eBoxsElement, PLUGINS.nx);
+    addBuilderElement(beforeAfterTabElement, PLUGINS.nx);
+    addBuilderElement(priceTableElement, PLUGINS.nx);
 }
