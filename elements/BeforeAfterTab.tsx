@@ -73,7 +73,9 @@ function BeforeAfterTabFrontend({ element }: { element: any }) {
   const textAlignment: "left" | "center" | "right" = s.style?.textAlignment || "left";
 
   // Style configurations
-  const imageHeight: number = s.style?.imageHeight ?? 500;
+  const imageHeightDesktop = resolveResponsiveValue(s.style?.imageHeight?.desktop ?? s.style?.imageHeight, 500);
+  const imageHeightTablet = resolveResponsiveValue(s.style?.imageHeight?.tablet ?? s.style?.imageHeight, 500);
+  const imageHeightMobile = resolveResponsiveValue(s.style?.imageHeight?.mobile ?? s.style?.imageHeight, 500);
   const imageBorderRadius: number = s.style?.imageBorderRadius ?? 12;
 
   const imageLeftOffsetDesktop = resolveResponsiveValue(s.style?.imageLeftOffset?.desktop ?? s.style?.imageLeftOffset, 20);
@@ -113,52 +115,16 @@ function BeforeAfterTabFrontend({ element }: { element: any }) {
       }}
     >
       <style>{`
-        .${elementId} .toggle-capsule {
-          background-color: ${capsuleBg};
-          border: 1px solid ${capsuleBorder};
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border-radius: 9999px;
-          padding: 4px;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          z-index: 20;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        }
-        .${elementId} .ba-button {
-          padding: 6px 16px;
-          font-size: 12px;
-          font-weight: 600;
-          border-radius: 9999px;
-          border: none;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          white-space: nowrap;
-        }
-        .${elementId} .ba-button.active {
-          background-color: ${capsuleActiveBg};
-          color: ${capsuleActiveTextColor};
-          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-        .${elementId} .ba-button.inactive {
-          background-color: transparent;
-          color: ${capsuleInactiveTextColor};
-        }
+
 
         /* Responsive Margins */
         .${elementId} .responsive-margin-container {
-          margin-left: ${marginLeftDesktop}px;
+          margin-left: var(--margin-left, ${marginLeftDesktop}px);
         }
-        @media (max-width: 1024px) {
-          .${elementId} .responsive-margin-container {
-            margin-left: ${marginLeftTablet}px;
-          }
-        }
-        @media (max-width: 768px) {
-          .${elementId} .responsive-margin-container {
-            margin-left: ${marginLeftMobile}px;
-          }
+
+        /* Responsive Banner Height */
+        .${elementId} .banner-height-container {
+          height: var(--image-height, ${imageHeightDesktop}px);
         }
 
         /* Image Left Offset Spacing */
@@ -167,25 +133,15 @@ function BeforeAfterTabFrontend({ element }: { element: any }) {
           top: 0;
           bottom: 0;
           right: 0;
-          left: ${imageLeftOffsetDesktop}%;
-        }
-        @media (max-width: 1024px) {
-          .${elementId} .bg-images-layer {
-            left: ${imageLeftOffsetTablet}%;
-          }
-        }
-        @media (max-width: 768px) {
-          .${elementId} .bg-images-layer {
-            left: ${imageLeftOffsetMobile}%;
-          }
+          left: var(--image-left-offset, ${imageLeftOffsetDesktop}%);
         }
       `}</style>
 
       {versions.length > 0 ? (
+        <>
         <div
-          className="relative w-full overflow-hidden"
+          className="relative w-full overflow-hidden banner-height-container md:block hidden"
           style={{
-            height: `${imageHeight}px`,
             borderRadius: `${imageBorderRadius}px`,
           }}
         >
@@ -239,18 +195,33 @@ function BeforeAfterTabFrontend({ element }: { element: any }) {
                     justifyContent: contentPosition === "center" ? "center" : contentPosition === "right" ? "flex-end" : "flex-start",
                   }}
                 >
-                  <div className="toggle-capsule">
-                    {versions.map((version, idx) => (
-                      <button
-                        key={version.id || idx}
-                        type="button"
-                        onClick={() => setActiveVerIdx(idx)}
-                        onMouseEnter={switchTrigger === "hover" ? () => setActiveVerIdx(idx) : undefined}
-                        className={`ba-button ${activeVerIdx === idx ? "active" : "inactive"}`}
-                      >
-                        {version.label || `Version #${idx + 1}`}
-                      </button>
-                    ))}
+                  <div
+                    className="inline-flex items-center gap-1 border rounded-full p-1 backdrop-blur-md"
+                    style={{
+                      backgroundColor: capsuleBg,
+                      borderColor: capsuleBorder,
+                    }}
+                  >
+                    {versions.map((version, idx) => {
+                      const isActive = activeVerIdx === idx;
+                      return (
+                        <button
+                          key={version.id || idx}
+                          type="button"
+                          onClick={() => setActiveVerIdx(idx)}
+                          onMouseEnter={switchTrigger === "hover" ? () => setActiveVerIdx(idx) : undefined}
+                          className="px-4 py-1.5 text-xs font-semibold rounded-full transition-all duration-300 border border-transparent cursor-pointer"
+                          style={{
+                            backgroundColor: isActive ? capsuleActiveBg : "transparent",
+                            color: isActive ? capsuleActiveTextColor : capsuleInactiveTextColor,
+                            borderColor: isActive ? capsuleBorder : "transparent",
+                            boxShadow: isActive ? "0 2px 6px rgba(0,0,0,0.15)" : "none",
+                          }}
+                        >
+                          {version.label || `Version #${idx + 1}`}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -258,6 +229,70 @@ function BeforeAfterTabFrontend({ element }: { element: any }) {
             </div>
           </div>
         </div>
+        <div className="block md:hidden w-full flex flex-col gap-4">
+          {title && (
+            <div
+              className="w-full pointer-events-auto"
+              style={{
+                textAlign: textAlignment,
+              }}
+            >
+              <h2
+                className="text-3xl font-extrabold tracking-tight leading-[1.2] select-none"
+                style={{ color: titleColor, ...titleTyp }}
+              >
+                {title.split("\n").map((line, idx) => (
+                  <div key={idx}>{line}</div>
+                ))}
+              </h2>
+            </div>
+          )}
+
+          <div
+            className="relative w-full overflow-hidden banner-height-container"
+            style={{
+              borderRadius: `${imageBorderRadius}px`,
+            }}
+          >
+            {versions.map((version, idx) => (
+              <img
+                key={version.id || idx}
+                src={version.image}
+                alt={version.label}
+                className="w-full h-full object-cover absolute inset-0 transition-opacity duration-500 ease-in-out"
+                style={{
+                  opacity: activeVerIdx === idx ? 1 : 0,
+                  zIndex: 1,
+                  borderRadius: `${imageBorderRadius}px`,
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-2.5 mt-2 justify-start">
+            {versions.map((version, idx) => {
+              const isActive = activeVerIdx === idx;
+              return (
+                <button
+                  key={version.id || idx}
+                  type="button"
+                  onClick={() => setActiveVerIdx(idx)}
+                  className="px-4 py-2 text-xs font-semibold rounded-full transition-all duration-300 border border-transparent cursor-pointer"
+                  style={{
+                    backgroundColor: isActive ? capsuleActiveBg : capsuleBg,
+                    color: isActive ? capsuleActiveTextColor : capsuleInactiveTextColor,
+                    borderColor: isActive ? capsuleBorder : "transparent",
+                    backdropFilter: "blur(12px)",
+                    WebkitBackdropFilter: "blur(12px)",
+                  }}
+                >
+                  {version.label || `Version #${idx + 1}`}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        </>
       ) : (
         <div className="p-8 border border-dashed text-center text-gray-500 rounded bg-gray-50 text-sm">
           Please add image versions inside Content Settings.
@@ -303,7 +338,7 @@ const beforeAfterTabElement = {
     },
 
     style: {
-      imageHeight: 500,
+      imageHeight: { desktop: 500, tablet: 500, mobile: 500 },
       imageBorderRadius: 12,
       textAlignment: "left",
       marginLeft: { desktop: 0, tablet: 0, mobile: 0 },

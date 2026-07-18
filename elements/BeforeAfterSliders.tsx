@@ -32,6 +32,24 @@ function getTypographyStyles(value: any) {
   return styles;
 }
 
+function resolveResponsiveValue(val: any, fallback: number): number {
+  if (val === undefined || val === null) return fallback;
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    const num = parseInt(val, 10);
+    return isNaN(num) ? fallback : num;
+  }
+  if (typeof val === "object") {
+    const res = val.desktop ?? val.tablet ?? val.mobile ?? val.value;
+    if (res !== undefined && res !== null) {
+      if (typeof res === "number") return res;
+      const num = parseInt(res, 10);
+      return isNaN(num) ? fallback : num;
+    }
+  }
+  return fallback;
+}
+
 function getDimensionsStyles(obj: any, property: "margin" | "padding") {
   if (!obj || typeof obj !== "object") return {};
   const u = obj.unit || "px";
@@ -62,7 +80,10 @@ function BeforeAfterSlidersFrontend({ element }: { element: any }) {
   const capsulePosition: "left" | "center" | "right" | "inside-card" = s.content?.capsulePosition || "left";
 
   // Style configurations
-  const imageHeight: number = s.style?.imageHeight ?? 450;
+  const imageHeightDesktop = resolveResponsiveValue(s.style?.imageHeight?.desktop ?? s.style?.imageHeight, 450);
+  const imageHeightTablet = resolveResponsiveValue(s.style?.imageHeight?.tablet ?? s.style?.imageHeight, 450);
+  const imageHeightMobile = resolveResponsiveValue(s.style?.imageHeight?.mobile ?? s.style?.imageHeight, 450);
+
   const imageBorderRadius: number = s.style?.imageBorderRadius ?? 8;
 
   const textAlignment: "left" | "center" | "right" = s.style?.textAlignment || "left";
@@ -117,81 +138,29 @@ function BeforeAfterSlidersFrontend({ element }: { element: any }) {
       }}
     >
       <style>{`
-        .${elementId} .toggle-capsule {
-          background-color: ${capsuleBg};
-          border: 1px solid ${capsuleBorder};
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border-radius: 9999px;
-          padding: 4px;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          z-index: 20;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        /* Responsive Image Height */
+        .${elementId} .image-height-container {
+          height: var(--image-height, ${imageHeightDesktop}px);
         }
-        .${elementId} .ba-button {
-          padding: 6px 16px;
-          font-size: 12px;
-          font-weight: 600;
-          border-radius: 9999px;
-          border: none;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          white-space: nowrap;
+        @media (max-width: 767px) {
+          .${elementId} .image-height-container {
+            height: var(--image-height, ${imageHeightMobile}px);
+          }
         }
-        .${elementId} .ba-button.active {
-          background-color: ${capsuleActiveBg};
-          color: ${capsuleActiveTextColor};
-          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-        .${elementId} .ba-button.inactive {
-          background-color: transparent;
-          color: ${capsuleInactiveTextColor};
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .${elementId} .image-height-container {
+            height: var(--image-height, ${imageHeightTablet}px);
+          }
         }
 
-        /* Common content styling */
-        .${elementId} .btn-style-1 {
-          background-color: ${btn1BgColor};
-          color: ${btn1TextColor};
-          border-radius: 9999px;
-          padding: 10px 24px;
-          font-size: 14px;
-          font-weight: 600;
-          transition: background-color 0.3s ease;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          text-decoration: none;
-        }
-        .${elementId} .btn-style-1:hover {
-          background-color: ${btn1HoverBgColor};
-        }
 
-        .${elementId} .btn-style-2 {
-          background-color: ${btn2BgColor};
-          color: ${btn2TextColor};
-          border: 1px solid ${btn2BorderColor};
-          border-radius: 9999px;
-          padding: 10px 24px;
-          font-size: 14px;
-          font-weight: 600;
-          transition: all 0.3s ease;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          text-decoration: none;
-        }
-        .${elementId} .btn-style-2:hover {
-          background-color: ${btn2HoverBgColor};
-        }
       `}</style>
 
       {versions.length > 0 ? (
+        <>
         <div
-          className="relative w-full overflow-hidden"
+          className="relative w-full overflow-hidden image-height-container md:block hidden"
           style={{
-            height: `${imageHeight}px`,
             borderRadius: `${imageBorderRadius}px`,
           }}
         >
@@ -248,7 +217,7 @@ function BeforeAfterSlidersFrontend({ element }: { element: any }) {
 
                   {(hasBtn1 || hasBtn2) && (
                     <div
-                      className="flex flex-wrap gap-4"
+                      className="flex flex-wrap gap-4 animate-fade-in"
                       style={{
                         justifyContent: textAlignment === "center" ? "center" : textAlignment === "right" ? "flex-end" : "flex-start",
                       }}
@@ -258,8 +227,18 @@ function BeforeAfterSlidersFrontend({ element }: { element: any }) {
                           href={btn1Link.url}
                           target={btn1Link.target || undefined}
                           rel={btn1Link.nofollow ? "nofollow" : undefined}
-                          className="btn-style-1"
-                          style={btnTypography}
+                          className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition-colors duration-300 no-underline cursor-pointer"
+                          style={{
+                            backgroundColor: btn1BgColor,
+                            color: btn1TextColor,
+                            ...btnTypography,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = btn1HoverBgColor;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = btn1BgColor;
+                          }}
                         >
                           {btn1Text}
                         </a>
@@ -270,8 +249,19 @@ function BeforeAfterSlidersFrontend({ element }: { element: any }) {
                           href={btn2Link.url}
                           target={btn2Link.target || undefined}
                           rel={btn2Link.nofollow ? "nofollow" : undefined}
-                          className="btn-style-2"
-                          style={btnTypography}
+                          className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition-colors duration-300 no-underline cursor-pointer"
+                          style={{
+                            backgroundColor: btn2BgColor,
+                            color: btn2TextColor,
+                            border: `1px solid ${btn2BorderColor}`,
+                            ...btnTypography,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = btn2HoverBgColor;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = btn2BgColor;
+                          }}
                         >
                           {btn2Text}
                         </a>
@@ -287,18 +277,33 @@ function BeforeAfterSlidersFrontend({ element }: { element: any }) {
                         justifyContent: textAlignment === "center" ? "center" : textAlignment === "right" ? "flex-end" : "flex-start",
                       }}
                     >
-                      <div className="toggle-capsule">
-                        {versions.map((version, idx) => (
-                          <button
-                            key={version.id || idx}
-                            type="button"
-                            onClick={() => setActiveVerIdx(idx)}
-                            onMouseEnter={switchTrigger === "hover" ? () => setActiveVerIdx(idx) : undefined}
-                            className={`ba-button ${activeVerIdx === idx ? "active" : "inactive"}`}
-                          >
-                            {version.label || `Version #${idx + 1}`}
-                          </button>
-                        ))}
+                      <div
+                        className="inline-flex items-center gap-1 border rounded-full p-1 backdrop-blur-md"
+                        style={{
+                          backgroundColor: capsuleBg,
+                          borderColor: capsuleBorder,
+                        }}
+                      >
+                        {versions.map((version, idx) => {
+                          const isActive = activeVerIdx === idx;
+                          return (
+                            <button
+                              key={version.id || idx}
+                              type="button"
+                              onClick={() => setActiveVerIdx(idx)}
+                              onMouseEnter={switchTrigger === "hover" ? () => setActiveVerIdx(idx) : undefined}
+                              className="px-4 py-1.5 text-xs font-semibold rounded-full transition-all duration-300 border border-transparent cursor-pointer"
+                              style={{
+                                backgroundColor: isActive ? capsuleActiveBg : "transparent",
+                                color: isActive ? capsuleActiveTextColor : capsuleInactiveTextColor,
+                                borderColor: isActive ? capsuleBorder : "transparent",
+                                boxShadow: isActive ? "0 2px 6px rgba(0,0,0,0.15)" : "none",
+                              }}
+                            >
+                              {version.label || `Version #${idx + 1}`}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -316,23 +321,151 @@ function BeforeAfterSlidersFrontend({ element }: { element: any }) {
                   justifyContent: capsulePosition === "center" ? "center" : capsulePosition === "right" ? "flex-end" : "flex-start",
                 }}
               >
-                <div className="toggle-capsule">
-                  {versions.map((version, idx) => (
-                    <button
-                      key={version.id || idx}
-                      type="button"
-                      onClick={() => setActiveVerIdx(idx)}
-                      onMouseEnter={switchTrigger === "hover" ? () => setActiveVerIdx(idx) : undefined}
-                      className={`ba-button ${activeVerIdx === idx ? "active" : "inactive"}`}
-                    >
-                      {version.label || `Version #${idx + 1}`}
-                    </button>
-                  ))}
+                <div
+                  className="inline-flex items-center gap-1 border rounded-full p-1 backdrop-blur-md"
+                  style={{
+                    backgroundColor: capsuleBg,
+                    borderColor: capsuleBorder,
+                  }}
+                >
+                  {versions.map((version, idx) => {
+                    const isActive = activeVerIdx === idx;
+                    return (
+                      <button
+                        key={version.id || idx}
+                        type="button"
+                        onClick={() => setActiveVerIdx(idx)}
+                        onMouseEnter={switchTrigger === "hover" ? () => setActiveVerIdx(idx) : undefined}
+                        className="px-4 py-1.5 text-xs font-semibold rounded-full transition-all duration-300 border border-transparent cursor-pointer"
+                        style={{
+                          backgroundColor: isActive ? capsuleActiveBg : "transparent",
+                          color: isActive ? capsuleActiveTextColor : capsuleInactiveTextColor,
+                          borderColor: isActive ? capsuleBorder : "transparent",
+                          boxShadow: isActive ? "0 2px 6px rgba(0,0,0,0.15)" : "none",
+                        }}
+                      >
+                        {version.label || `Version #${idx + 1}`}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           )}
         </div>
+        <div className="md:hidden w-full flex flex-col gap-6">
+          <div className="flex flex-col items-center text-center space-y-4 px-4">
+            {title && (
+              <h2
+                className="text-3xl font-extrabold tracking-tight leading-tight select-none"
+                style={{ color: commonTitleColor, ...commonTitleTyp }}
+              >
+                {title}
+              </h2>
+            )}
+
+            {description && (
+              <p
+                className="text-base leading-relaxed"
+                style={{ color: commonDescColor, ...commonDescTyp }}
+              >
+                {description}
+              </p>
+            )}
+
+            {(hasBtn1 || hasBtn2) && (
+              <div className="flex flex-col sm:flex-row gap-3 w-full justify-center items-center">
+                {hasBtn1 && (
+                  <a
+                    href={btn1Link.url}
+                    target={btn1Link.target || undefined}
+                    rel={btn1Link.nofollow ? "nofollow" : undefined}
+                    className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition-colors duration-300 no-underline cursor-pointer w-full sm:w-auto"
+                    style={{
+                      backgroundColor: btn1BgColor,
+                      color: btn1TextColor,
+                      ...btnTypography,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = btn1HoverBgColor;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = btn1BgColor;
+                    }}
+                  >
+                    {btn1Text}
+                  </a>
+                )}
+
+                {hasBtn2 && (
+                  <a
+                    href={btn2Link.url}
+                    target={btn2Link.target || undefined}
+                    rel={btn2Link.nofollow ? "nofollow" : undefined}
+                    className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition-colors duration-300 no-underline cursor-pointer w-full sm:w-auto"
+                    style={{
+                      backgroundColor: btn2BgColor,
+                      color: btn2TextColor,
+                      border: `1px solid ${btn2BorderColor}`,
+                      ...btnTypography,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = btn2HoverBgColor;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = btn2BgColor;
+                    }}
+                  >
+                    {btn2Text}
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div
+            className="relative w-full overflow-hidden image-height-container shadow-md"
+            style={{
+              borderRadius: `${imageBorderRadius}px`,
+            }}
+          >
+            {versions.map((version, idx) => (
+              <img
+                key={version.id || idx}
+                src={version.image}
+                alt={version.label}
+                className="w-full h-full object-cover absolute inset-0 transition-opacity duration-500 ease-in-out"
+                style={{
+                  opacity: activeVerIdx === idx ? 1 : 0,
+                  zIndex: 1,
+                  borderRadius: `${imageBorderRadius}px`,
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-2.5 mt-2 justify-start px-2">
+            {versions.map((version, idx) => {
+              const isActive = activeVerIdx === idx;
+              return (
+                <button
+                  key={version.id || idx}
+                  type="button"
+                  onClick={() => setActiveVerIdx(idx)}
+                  className="px-4 py-2.5 text-xs font-semibold rounded-full border border-gray-200 transition-all duration-300 cursor-pointer"
+                  style={{
+                    backgroundColor: isActive ? capsuleActiveBg : "rgba(0, 0, 0, 0.05)",
+                    color: isActive ? capsuleActiveTextColor : "#374151",
+                    borderColor: isActive ? capsuleBorder : "rgba(0, 0, 0, 0.08)",
+                  }}
+                >
+                  {version.label || `Version #${idx + 1}`}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        </>
       ) : (
         <div className="p-8 border border-dashed text-center text-gray-500 rounded bg-gray-50 text-sm">
           Please add image versions inside Content Settings.
@@ -378,7 +511,7 @@ const beforeAfterSlidersElement = {
     },
 
     style: {
-      imageHeight: 450,
+      imageHeight: { desktop: 450, tablet: 450, mobile: 450 },
       imageBorderRadius: 8,
       textAlignment: "left",
       contentCardBg: "transparent",

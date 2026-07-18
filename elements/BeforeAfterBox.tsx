@@ -31,6 +31,24 @@ function getTypographyStyles(value: any) {
   return styles;
 }
 
+function resolveResponsiveValue(val: any, fallback: number): number {
+  if (val === undefined || val === null) return fallback;
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    const num = parseInt(val, 10);
+    return isNaN(num) ? fallback : num;
+  }
+  if (typeof val === "object") {
+    const res = val.desktop ?? val.tablet ?? val.mobile ?? val.value;
+    if (res !== undefined && res !== null) {
+      if (typeof res === "number") return res;
+      const num = parseInt(res, 10);
+      return isNaN(num) ? fallback : num;
+    }
+  }
+  return fallback;
+}
+
 function getDimensionsStyles(obj: any, property: "margin" | "padding") {
   if (!obj || typeof obj !== "object") return {};
   const u = obj.unit || "px";
@@ -62,9 +80,15 @@ function BeforeAfterBoxFrontend({ element }: { element: any }) {
   const btn2Link: any = s.content?.btn2Link || { url: "" };
 
   // Style configurations
-  const imageHeight: number = s.style?.imageHeight ?? 450;
+  const imageHeightDesktop = resolveResponsiveValue(s.style?.imageHeight?.desktop ?? s.style?.imageHeight, 450);
+  const imageHeightTablet = resolveResponsiveValue(s.style?.imageHeight?.tablet ?? s.style?.imageHeight, 450);
+  const imageHeightMobile = resolveResponsiveValue(s.style?.imageHeight?.mobile ?? s.style?.imageHeight, 450);
+
   const imageBorderRadius: number = s.style?.imageBorderRadius ?? 8;
-  const columnGap: number = s.style?.columnGap ?? 40;
+
+  const columnGapDesktop = resolveResponsiveValue(s.style?.columnGap?.desktop ?? s.style?.columnGap, 40);
+  const columnGapTablet = resolveResponsiveValue(s.style?.columnGap?.tablet ?? s.style?.columnGap, 40);
+  const columnGapMobile = resolveResponsiveValue(s.style?.columnGap?.mobile ?? s.style?.columnGap, 40);
 
   const titleColor: string = s.style?.titleColor || "#111827";
   const titleTyp = getTypographyStyles(s.style?.titleTypography || {});
@@ -169,6 +193,41 @@ function BeforeAfterBoxFrontend({ element }: { element: any }) {
       }}
     >
       <style>{`
+        /* Responsive Comparison Row Gap */
+        .${elementId} .ebox-row {
+          gap: var(--column-gap, ${columnGapDesktop}px);
+        }
+
+        /* Responsive Image Height */
+        .${elementId} .image-height-container {
+          height: var(--image-height, ${imageHeightDesktop}px);
+        }
+        @media (max-width: 767px) {
+          .${elementId} .image-height-container {
+            height: var(--image-height, ${imageHeightMobile}px);
+          }
+        }
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .${elementId} .image-height-container {
+            height: var(--image-height, ${imageHeightTablet}px);
+          }
+        }
+
+        /* Responsive Side-by-Side Height */
+        .${elementId} .sbs-height-container {
+          height: calc(var(--image-height, ${imageHeightDesktop}px) - 40px);
+        }
+        @media (max-width: 767px) {
+          .${elementId} .sbs-height-container {
+            height: calc(var(--image-height, ${imageHeightMobile}px) - 40px);
+          }
+        }
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .${elementId} .sbs-height-container {
+            height: calc(var(--image-height, ${imageHeightTablet}px) - 40px);
+          }
+        }
+
         .${elementId} .slider-handle {
           background-color: ${handleBg};
           box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
@@ -223,62 +282,19 @@ function BeforeAfterBoxFrontend({ element }: { element: any }) {
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
-
-        .${elementId} .btn-primary {
-          background-color: ${btn1Bg};
-          color: ${btn1TextColor};
-          border: none;
-          border-radius: 9999px;
-          padding: 10px 24px;
-          font-size: 14px;
-          font-weight: 600;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          transition: background-color 0.3s ease;
-          text-decoration: none;
-        }
-        .${elementId} .btn-primary:hover {
-          background-color: ${btn1HoverBg};
-        }
-
-        .${elementId} .btn-secondary {
-          background-color: ${btn2Bg};
-          color: ${btn2TextColor};
-          border: 1px solid ${btn2BorderColor};
-          border-radius: 9999px;
-          padding: 10px 24px;
-          font-size: 14px;
-          font-weight: 600;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s ease;
-          text-decoration: none;
-        }
-        .${elementId} .btn-secondary:hover {
-          background-color: ${btn2HoverBg};
-        }
       `}</style>
 
-      <div
-        className="flex flex-col lg:flex-row w-full items-stretch"
-        style={{
-          gap: `${columnGap}px`,
-          flexDirection: imagePosition === "right" ? "row-reverse" : "row",
-        }}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-2 w-full items-center ebox-row">
         {/* ── Image Comparison side block ── */}
-        <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <div className={`min-w-0 flex flex-col justify-center ${imagePosition === "right" ? "order-2" : "order-1"}`}>
           {layoutType === "split-slider" ? (
             /* Split slider layout */
             <div
               ref={containerRef}
               onTouchMove={handleTouchMove}
               onMouseDown={() => setIsDragging(true)}
-              className="slider-container w-full relative select-none overflow-hidden group cursor-ew-resize"
+              className="slider-container w-full relative select-none overflow-hidden group cursor-ew-resize image-height-container"
               style={{
-                height: `${imageHeight}px`,
                 borderRadius: `${imageBorderRadius}px`,
               }}
             >
@@ -305,25 +321,54 @@ function BeforeAfterBoxFrontend({ element }: { element: any }) {
                 className="absolute top-0 bottom-0 w-[2px] bg-white z-20 pointer-events-none"
                 style={{ left: `${sliderPos}%` }}
               >
-                <div className="slider-handle">
-                  <Icon icon="mdi:chevron-left-right" width="16" className="text-gray-500" />
+                <div
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center cursor-ew-resize border border-black/10 transition-transform duration-200 hover:scale-110 active:scale-95 shadow-md"
+                  style={{
+                    backgroundColor: handleBg,
+                    color: handleIconColor,
+                  }}
+                >
+                  <Icon icon="mdi:chevron-left-right" width="16" />
                 </div>
               </div>
 
               {/* Dynamic Overlay Hover Labels */}
-              <span className="slider-badge left-4">Before</span>
-              <span className="slider-badge right-4">After</span>
+              <span
+                className="absolute top-1/2 -translate-y-1/2 z-10 px-3.5 py-1.5 text-[11px] font-semibold rounded pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-[4px] left-4"
+                style={{
+                  backgroundColor: badgeBg,
+                  color: badgeTextColor,
+                }}
+              >
+                Before
+              </span>
+              <span
+                className="absolute top-1/2 -translate-y-1/2 z-10 px-3.5 py-1.5 text-[11px] font-semibold rounded pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-[4px] right-4"
+                style={{
+                  backgroundColor: badgeBg,
+                  color: badgeTextColor,
+                }}
+              >
+                After
+              </span>
             </div>
           ) : (
             /* Side-by-side double image layout */
             <div className="grid grid-cols-2 gap-4 w-full">
               {/* Before image box */}
               <div className="flex flex-col items-start w-full">
-                <span className="sbs-badge">Before</span>
-                <div
-                  className="w-full overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
+                <span
+                  className="px-3 py-1 text-[11px] font-bold rounded inline-block mb-2 uppercase tracking-wider"
                   style={{
-                    height: `${imageHeight - 40}px`,
+                    backgroundColor: sbsBadgeBg,
+                    color: sbsBadgeTextColor,
+                  }}
+                >
+                  Before
+                </span>
+                <div
+                  className="w-full overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 sbs-height-container"
+                  style={{
                     borderRadius: `${imageBorderRadius}px`,
                   }}
                 >
@@ -337,11 +382,18 @@ function BeforeAfterBoxFrontend({ element }: { element: any }) {
 
               {/* After image box */}
               <div className="flex flex-col items-start w-full">
-                <span className="sbs-badge">After</span>
-                <div
-                  className="w-full overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
+                <span
+                  className="px-3 py-1 text-[11px] font-bold rounded inline-block mb-2 uppercase tracking-wider"
                   style={{
-                    height: `${imageHeight - 40}px`,
+                    backgroundColor: sbsBadgeBg,
+                    color: sbsBadgeTextColor,
+                  }}
+                >
+                  After
+                </span>
+                <div
+                  className="w-full overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 sbs-height-container"
+                  style={{
                     borderRadius: `${imageBorderRadius}px`,
                   }}
                 >
@@ -358,7 +410,7 @@ function BeforeAfterBoxFrontend({ element }: { element: any }) {
 
         {/* ── Text Copy Details side block ── */}
         {(title || description || col1.length > 0 || col2.length > 0 || hasBtn1 || hasBtn2) && (
-          <div className="flex-1 flex flex-col justify-center">
+          <div className={`flex flex-col justify-center ${imagePosition === "right" ? "order-1" : "order-2"}`}>
             {title && (
               <h3
                 className="text-3xl font-bold tracking-tight mb-4"
@@ -422,8 +474,18 @@ function BeforeAfterBoxFrontend({ element }: { element: any }) {
                     href={btn1Link.url}
                     target={btn1Link.target || undefined}
                     rel={btn1Link.nofollow ? "nofollow" : undefined}
-                    className="btn-primary"
-                    style={btnTyp}
+                    className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition-colors duration-300 no-underline cursor-pointer"
+                    style={{
+                      backgroundColor: btn1Bg,
+                      color: btn1TextColor,
+                      ...btnTyp,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = btn1HoverBg;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = btn1Bg;
+                    }}
                   >
                     {btn1Text}
                   </a>
@@ -434,8 +496,19 @@ function BeforeAfterBoxFrontend({ element }: { element: any }) {
                     href={btn2Link.url}
                     target={btn2Link.target || undefined}
                     rel={btn2Link.nofollow ? "nofollow" : undefined}
-                    className="btn-secondary"
-                    style={btnTyp}
+                    className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition-colors duration-300 no-underline cursor-pointer"
+                    style={{
+                      backgroundColor: btn2Bg,
+                      color: btn2TextColor,
+                      border: `1px solid ${btn2BorderColor}`,
+                      ...btnTyp,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = btn2HoverBg;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = btn2Bg;
+                    }}
                   >
                     {btn2Text}
                   </a>
@@ -446,6 +519,7 @@ function BeforeAfterBoxFrontend({ element }: { element: any }) {
         )}
       </div>
     </div>
+    
   );
 }
 
@@ -471,9 +545,9 @@ const beforeAfterBoxElement = {
     },
 
     style: {
-      imageHeight: 450,
+      imageHeight: { desktop: 450, tablet: 450, mobile: 450 },
       imageBorderRadius: 8,
-      columnGap: 40,
+      columnGap: { desktop: 40, tablet: 40, mobile: 40 },
       titleColor: "#111827",
       titleTypography: {
         fontSize: 28,

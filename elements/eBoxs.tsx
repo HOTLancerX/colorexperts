@@ -30,6 +30,24 @@ function getTypographyStyles(value: any) {
   return styles;
 }
 
+function resolveResponsiveValue(val: any, fallback: number): number {
+  if (val === undefined || val === null) return fallback;
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    const num = parseInt(val, 10);
+    return isNaN(num) ? fallback : num;
+  }
+  if (typeof val === "object") {
+    const res = val.desktop ?? val.tablet ?? val.mobile ?? val.value;
+    if (res !== undefined && res !== null) {
+      if (typeof res === "number") return res;
+      const num = parseInt(res, 10);
+      return isNaN(num) ? fallback : num;
+    }
+  }
+  return fallback;
+}
+
 function getDimensionsStyles(obj: any, property: "margin" | "padding") {
   if (!obj || typeof obj !== "object") return {};
   const u = obj.unit || "px";
@@ -56,9 +74,15 @@ function EBoxsFrontend({ element }: { element: any }) {
   const contentPosition: "left" | "right" = s.content?.contentPosition || "right";
 
   // Style configurations
-  const imageHeight: number = s.style?.imageHeight ?? 380;
+  const imageHeightDesktop = resolveResponsiveValue(s.style?.imageHeight?.desktop ?? s.style?.imageHeight, 380);
+  const imageHeightTablet = resolveResponsiveValue(s.style?.imageHeight?.tablet ?? s.style?.imageHeight, 380);
+  const imageHeightMobile = resolveResponsiveValue(s.style?.imageHeight?.mobile ?? s.style?.imageHeight, 380);
+
   const imageBorderRadius: number = s.style?.imageBorderRadius ?? 8;
-  const columnGap: number = s.style?.columnGap ?? 50;
+
+  const columnGapDesktop = resolveResponsiveValue(s.style?.columnGap?.desktop ?? s.style?.columnGap, 50);
+  const columnGapTablet = resolveResponsiveValue(s.style?.columnGap?.tablet ?? s.style?.columnGap, 50);
+  const columnGapMobile = resolveResponsiveValue(s.style?.columnGap?.mobile ?? s.style?.columnGap, 50);
 
   const stepBg: string = s.style?.stepBg || "#fee2e2";
   const stepTextColor: string = s.style?.stepTextColor || "#991b1b";
@@ -96,6 +120,16 @@ function EBoxsFrontend({ element }: { element: any }) {
       }}
     >
       <style>{`
+        /* Responsive Comparison Row Gap */
+        .${elementId} .ebox-row {
+          gap: var(--column-gap, ${columnGapDesktop}px);
+        }
+
+        /* Responsive Image Height */
+        .${elementId} .image-height-container {
+          height: var(--image-height, ${imageHeightDesktop}px);
+        }
+
         .${elementId} .step-badge {
           background-color: ${stepBg};
           color: ${stepTextColor};
@@ -106,43 +140,31 @@ function EBoxsFrontend({ element }: { element: any }) {
           display: inline-block;
           margin-bottom: 16px;
         }
-
-        .${elementId} .round-arrow-btn {
-          width: 46px;
-          height: 46px;
-          border-radius: 9999px;
-          background-color: ${arrowBg};
-          border: 1px solid ${arrowBorderColor};
-          color: ${arrowColor};
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s ease;
-          flex-shrink: 0;
-          text-decoration: none;
-        }
-        .${elementId} .round-arrow-btn:hover {
-          background-color: ${arrowHoverBg};
-          transform: translateX(3px);
-        }
       `}</style>
 
-      <div
-        className="flex flex-col lg:flex-row w-full items-stretch"
-        style={{
-          gap: `${columnGap}px`,
-          flexDirection: contentPosition === "right" ? "row-reverse" : "row",
-        }}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-2 w-full items-center ebox-row">
         {/* ── Text Content Column ── */}
-        <div className="flex-1 flex flex-row items-start gap-4 lg:gap-6">
+        <div className={`flex flex-row items-start gap-4 lg:gap-6 ${contentPosition === "right" ? "order-2" : "order-1"}`}>
           {/* Circular arrow icon wrapper */}
           {hasArrowLink && (
             <a
               href={arrowLink.url}
               target={arrowLink.target || undefined}
               rel={arrowLink.nofollow ? "nofollow" : undefined}
-              className="round-arrow-btn mt-[52px]"
+              className="w-[46px] h-[46px] rounded-full flex items-center justify-center transition-all duration-300 no-underline shrink-0 mt-[52px]"
+              style={{
+                backgroundColor: arrowBg,
+                border: `1px solid ${arrowBorderColor}`,
+                color: arrowColor,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = arrowHoverBg;
+                e.currentTarget.style.transform = "translateX(3px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = arrowBg;
+                e.currentTarget.style.transform = "none";
+              }}
             >
               <Icon icon="solar:arrow-right-linear" width="20" />
             </a>
@@ -181,11 +203,10 @@ function EBoxsFrontend({ element }: { element: any }) {
         </div>
 
         {/* ── Image Column (Single layout image) ── */}
-        <div className="flex-1 min-w-0 flex items-center justify-center">
+        <div className={`flex items-center justify-center ${contentPosition === "right" ? "order-1" : "order-2"}`}>
           <div
-            className="w-full overflow-hidden shadow-sm"
+            className="w-full overflow-hidden shadow-sm image-height-container"
             style={{
-              height: `${imageHeight}px`,
               borderRadius: `${imageBorderRadius}px`,
             }}
           >
@@ -219,9 +240,9 @@ const eBoxsElement = {
     },
 
     style: {
-      imageHeight: 380,
+      imageHeight: { desktop: 380, tablet: 380, mobile: 380 },
       imageBorderRadius: 8,
-      columnGap: 50,
+      columnGap: { desktop: 50, tablet: 50, mobile: 50 },
       stepBg: "#fee2e2",
       stepTextColor: "#991b1b",
       titleColor: "#111827",

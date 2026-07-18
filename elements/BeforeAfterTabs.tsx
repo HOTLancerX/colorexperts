@@ -31,6 +31,24 @@ function getTypographyStyles(value: any) {
   return styles;
 }
 
+function resolveResponsiveValue(val: any, fallback: number): number {
+  if (val === undefined || val === null) return fallback;
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    const num = parseInt(val, 10);
+    return isNaN(num) ? fallback : num;
+  }
+  if (typeof val === "object") {
+    const res = val.desktop ?? val.tablet ?? val.mobile ?? val.value;
+    if (res !== undefined && res !== null) {
+      if (typeof res === "number") return res;
+      const num = parseInt(res, 10);
+      return isNaN(num) ? fallback : num;
+    }
+  }
+  return fallback;
+}
+
 function getDimensionsStyles(obj: any, property: "margin" | "padding") {
   if (!obj || typeof obj !== "object") return {};
   const u = obj.unit || "px";
@@ -51,9 +69,15 @@ function BeforeAfterTabsFrontend({ element }: { element: any }) {
   const switchTrigger: "click" | "hover" = s.content?.switchTrigger || "click";
 
   // Style configurations
-  const imageHeight: number = s.style?.imageHeight ?? 450;
+  const imageHeightDesktop = resolveResponsiveValue(s.style?.imageHeight?.desktop ?? s.style?.imageHeight, 450);
+  const imageHeightTablet = resolveResponsiveValue(s.style?.imageHeight?.tablet ?? s.style?.imageHeight, 450);
+  const imageHeightMobile = resolveResponsiveValue(s.style?.imageHeight?.mobile ?? s.style?.imageHeight, 450);
+
   const imageBorderRadius: number = s.style?.imageBorderRadius ?? 8;
-  const columnGap: number = s.style?.columnGap ?? 40;
+
+  const columnGapDesktop = resolveResponsiveValue(s.style?.columnGap?.desktop ?? s.style?.columnGap, 40);
+  const columnGapTablet = resolveResponsiveValue(s.style?.columnGap?.tablet ?? s.style?.columnGap, 40);
+  const columnGapMobile = resolveResponsiveValue(s.style?.columnGap?.mobile ?? s.style?.columnGap, 40);
 
   // Toggle Capsule configurations
   const capsuleBg: string = s.style?.capsuleBg || "rgba(255, 255, 255, 0.2)";
@@ -141,6 +165,16 @@ function BeforeAfterTabsFrontend({ element }: { element: any }) {
       }}
     >
       <style>{`
+        /* Responsive Comparison Row Gap */
+        .${elementId} .comparison-row {
+          gap: var(--column-gap, ${columnGapDesktop}px);
+        }
+
+        /* Responsive Image Height */
+        .${elementId} .image-height-container {
+          height: var(--image-height, ${imageHeightDesktop}px);
+        }
+
         .${elementId} .toggle-capsule {
           background-color: ${capsuleBg};
           border: 1px solid ${capsuleBorder};
@@ -254,15 +288,13 @@ function BeforeAfterTabsFrontend({ element }: { element: any }) {
         <div className="w-full">
           {/* ── Main Comparison Row ── */}
           <div
-            className="flex flex-col lg:flex-row w-full items-stretch"
-            style={{ gap: `${columnGap}px` }}
+            className="flex flex-col lg:flex-row w-full items-stretch comparison-row"
           >
             {/* Left Comparison image container */}
             <div className="flex-1 min-w-0 relative group">
               <div
-                className="w-full overflow-hidden relative"
+                className="w-full overflow-hidden relative image-height-container"
                 style={{
-                  height: `${imageHeight}px`,
                   borderRadius: `${imageBorderRadius}px`,
                 }}
               >
@@ -427,9 +459,9 @@ const beforeAfterTabsElement = {
     },
 
     style: {
-      imageHeight: 450,
+      imageHeight: { desktop: 450, tablet: 450, mobile: 450 },
       imageBorderRadius: 8,
-      columnGap: 40,
+      columnGap: { desktop: 40, tablet: 40, mobile: 40 },
       capsuleBg: "rgba(255, 255, 255, 0.2)",
       capsuleBorder: "rgba(255, 255, 255, 0.3)",
       capsuleActiveBg: "rgba(255, 255, 255, 0.4)",
