@@ -334,7 +334,7 @@ function BeforeAfterBoxFrontend({ element }: { element: any }) {
 
               {/* Dynamic Overlay Hover Labels */}
               <span
-                className="absolute top-1/2 -translate-y-1/2 z-10 px-3.5 py-1.5 text-[11px] font-semibold rounded pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-[4px] left-4"
+                className="absolute top-1/2 -translate-y-1/2 z-10 px-3.5 py-1.5 text-[11px] font-semibold rounded pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-xs left-4"
                 style={{
                   backgroundColor: badgeBg,
                   color: badgeTextColor,
@@ -343,7 +343,7 @@ function BeforeAfterBoxFrontend({ element }: { element: any }) {
                 Before
               </span>
               <span
-                className="absolute top-1/2 -translate-y-1/2 z-10 px-3.5 py-1.5 text-[11px] font-semibold rounded pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-[4px] right-4"
+                className="absolute top-1/2 -translate-y-1/2 z-10 px-3.5 py-1.5 text-[11px] font-semibold rounded pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-xs right-4"
                 style={{
                   backgroundColor: badgeBg,
                   color: badgeTextColor,

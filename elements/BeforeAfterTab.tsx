@@ -229,7 +229,7 @@ function BeforeAfterTabFrontend({ element }: { element: any }) {
             </div>
           </div>
         </div>
-        <div className="block md:hidden w-full flex flex-col gap-4">
+        <div className="md:hidden w-full flex flex-col gap-4">
           {title && (
             <div
               className="w-full pointer-events-auto"
